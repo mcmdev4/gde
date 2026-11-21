@@ -1,0 +1,7 @@
+Package: gde
+Version: 1.0
+Section: utils
+Priority: optional
+Architecture: all
+Maintainer: Hunor
+Description: a simple tui for beginner devs
