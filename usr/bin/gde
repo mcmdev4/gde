@@ -15,6 +15,7 @@ editorch() {
 	   --menu "Options:" 0 0 0 \
 	   1 "nano" \
 	   2 "vim" \
+	   3 "neovim" \
 	   3>&1 1>&2 2>&3
 }
 
@@ -24,9 +25,21 @@ dpkgs() {
 	   1 "python3" \
 	   2 "git" \
 	   3 "github" \
+	   4 "neovim" \
 	   3>&1 1>&2 2>&3
 }
 
+crepo() {
+    dialog --backtitle "Create repository (public)" --inputbox "Enter repository name:" 0 0 3>&1 1>&2 2>&3
+}
+
+auth() {
+    PASSWORD=$(cat /usr/share/gde-cr/global.pswd)
+}
+
+cont() {
+    read -p "Press enter to continue..."
+}
 
 sudo mkdir -p /usr/share/gde-cr
 
@@ -35,12 +48,15 @@ if [ ! -f "$CRED_SAVE_PATH" ]; then
 fi
 
 while true; do
-    mainmenu=$(dialog --backtitle "GDE | Graphical Development Enviroment" \
+    mainmenu=$(dialog --backtitle "GDE | Graphical Development Environment" \
 	              --menu "Tools:" 0 0 0 \
 		      1 "Edit script" \
 		      2 "Install packages" \
 		      3 "Upgrade & update" \
 		      4 "Set password" \
+		      5 "Create public github repository" \
+		      6 "Initialise git in this directory" \
+		      7 "Log in to Github CLI" \
 		      3>&1 1>&2 2>&3)
     status=$?
 
@@ -48,7 +64,7 @@ while true; do
 
     case "$mainmenu" in
 	1)
-	    PASSWORD=$(cat /usr/share/gde-cr/global.pswd)
+	    auth
 	    usimp=$(pswdbox)
 	    if [ "$usimp" = "$PASSWORD" ]; then
 	        edc=$(editorch)
@@ -63,6 +79,11 @@ while true; do
 			vim "$fil"
 			clear
 			;;
+		    3)
+			fil=$(filech)
+			neovim "$fil"
+			clear
+			;;
 		    *)
 			clear
 			;;
@@ -70,21 +91,33 @@ while true; do
 	    fi
 	    ;;
 	2)
-	    PASSWORD=$(cat /usr/share/gde-cr/global.pswd)
+	    auth
 	    usimp=$(pswdbox)
 	    if [ "$usimp" = "$PASSWORD" ]; then
 	        pkg=$(dpkgs)
 		case "$pkg" in
 		    1)
+			clear
 		        sudo apt install python3 -y
+			cont
 			clear
 			;;
 		    2)
+			clear
 			sudo apt install git -y
+			cont
 			clear
 			;;
 		    3)
+			clear
 			sudo apt install gh -y
+			cont
+			clear
+			;;
+		    4)
+			clear
+			sudo apt install neovim -y
+			cont
 			clear
 			;;
 		    *)
@@ -94,18 +127,46 @@ while true; do
 	    fi
 	    ;;
 	3)
-	    PASSWORD=$(cat /usr/share/gde-cr/global.pswd)
+	    auth
 	    usimp=$(pswdbox)
 	    if [ "$usimp" = "$PASSWORD" ]; then
 		clear
 	        sudo apt update && sudo apt upgrade -y
+		cont
+		clear
 	    fi
 	    ;;
 	4)
-	    sudo -v
+	    if sudo -v; then
+	        usimp=$(pswdbox)
+	        echo "$usimp" | sudo tee "$CRED_SAVE_PATH" > /dev/null
+	        clear
+	    fi
+	    ;;
+	5)
+	    auth
 	    usimp=$(pswdbox)
-	    echo "$usimp" | sudo tee "$CRED_SAVE_PATH" > /dev/null
-	    clear
+	    if [ "$usimp" = "$PASSWORD" ]; then
+	        repon=$(crepo)
+		gh repo create "$usimp" --public
+		clear
+	    fi
+	    ;;
+	6)
+	    auth
+	    usimp=$(pswdbox)
+	    if [ "$usimp" = "$PASSWORD" ]; then
+	        git init
+		git branch -m Main
+	    fi
+	    ;;
+	7)
+	    auth
+	    usimp=$(pswdbox)
+	    if [ "$usimp" = "$PASSWORD" ]; then
+		gh auth login
+		clear
+	    fi
 	    ;;
 	*)
 	    echo "exited w/ code: $status"
