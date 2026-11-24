@@ -26,6 +26,8 @@ dpkgs() {
 	   2 "git" \
 	   3 "github" \
 	   4 "neovim" \
+	   5 "reprepro" \
+	   6 "curl" \
 	   3>&1 1>&2 2>&3
 }
 
@@ -56,7 +58,11 @@ while true; do
 		      4 "Set password" \
 		      5 "Create public github repository" \
 		      6 "Initialise git in this directory" \
-		      7 "Log in to Github CLI" \
+		      7 "Log in to Github" \
+		      8 "Initialise UDR repository" \
+		      9 "Set as startup terminal application" \
+		      10 "Wipe program data (password)" \
+		      11 "About" \
 		      3>&1 1>&2 2>&3)
     status=$?
 
@@ -120,6 +126,18 @@ while true; do
 			cont
 			clear
 			;;
+		    5)
+			clear
+			sudo apt install reprepro -y
+			cont
+			clear
+			;;
+		    6)
+			clear
+			sudo apt install curl -y
+			cont
+			clear
+			;;
 		    *)
 			clear
 			;;
@@ -148,7 +166,7 @@ while true; do
 	    usimp=$(pswdbox)
 	    if [ "$usimp" = "$PASSWORD" ]; then
 	        repon=$(crepo)
-		gh repo create "$usimp" --public
+		gh repo create "$repon" --public
 		clear
 	    fi
 	    ;;
@@ -167,6 +185,60 @@ while true; do
 		gh auth login
 		clear
 	    fi
+	    ;;
+	8)
+	    sudo mkdir -p /etc/apt/keyrings
+
+	    sudo curl -fsSL \
+	    https://mcmdev4.github.io/udr/repo-key.asc \
+	    -o /etc/apt/keyrings/udr-archive-keyring.asc
+            
+	    echo "deb [signed-by=/etc/apt/keyrings/udr-archive-keyring.asc] https://mcmdev4.github.io/udr/ stable main"             | sudo tee /etc/apt/sources.list.d/udr.list
+
+	    chmod 755 /etc/apt/sources.list.d/udr.list
+	    ;;
+	9)
+	    auth
+	    usimp=$(pswdbox)
+	    if [ "$usimp" = "$PASSWORD" ]; then
+                echo "Setting up startup services..."
+	        cat << 'EOF' | sudo tee -a ~/.bashrc > /dev/null
+# Auto-start GDE
+if [ $- == *i* ]; then
+gde 
+fi
+EOF
+	    sleep 5
+	    cont
+	    fi
+            ;;
+	10)
+	    sudo -v
+	    auth
+	    usimp=$(pswdbox)
+	    if [ "$usimp" = "$PASSWORD" ]; then
+	        dialog --backtitle "Wipe program data" --yesno "Are you sure you want to continue?" 0 0
+	        result=$?
+	        if [ "$result" -eq 0 ]; then
+		    clear
+		    sudo rm -rf /usr/share/gde-cr/*
+		    cont
+		    clear
+	        else
+		    clear
+		    cont
+		    clear
+		fi
+	    fi
+	    ;;
+	11)
+	    info="Version: 1.3 Budapest
+	          Codename theme: Capitals
+		  ------- SYSTEM --------
+		  Hostname: $(hostname)
+		  User: $USER
+		  Distro: $(. /etc/os-release && echo ""$PRETTY_NAME"")"
+	    dialog --backtitle "About (system and app)" --msgbox "$info" 0 0
 	    ;;
 	*)
 	    echo "exited w/ code: $status"
