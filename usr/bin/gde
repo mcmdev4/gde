@@ -1,38 +1,50 @@
 #!/usr/bin/env bash
 
 CRED_SAVE_PATH="/usr/share/gde-cr/global.pswd"
+CONF="/usr/share/conf/vis.conf"
+DEF_CONF="DEFAULT_FORMAT='\Zn'
+INFO=''"
+sudo mkdir -p /usr/share/gde-cr
+sudo mkdir -p /usr/share/conf
+if [ ! -f "$CONF" ]; then
+    echo "$DEF_CONF" | sudo tee "$CONF" > /dev/null
+fi
+source "$CONF"
+
+df="${DEFAULT_FORMAT}"
+
 
 pswdbox() {
-    dialog --backtitle "PAS Auth manager" --insecure --passwordbox "enter password" 0 0 3>&1 1>&2 2>&3
+    dialog --backtitle "${df}PAS Auth manager${df}" --insecure --passwordbox "${df}enter password${df}" 0 0 3>&1 1>&2 2>&3
 }
 
 filech() {
-    dialog --backtitle "File Chooser" --inputbox "Enter file path:" 0 0 3>&1 1>&2 2>&3
+    dialog --backtitle "${df}File Chooser${df}" --inputbox "${df}Enter file path:${df}" 0 0 3>&1 1>&2 2>&3
 }
 
 editorch() {
-    dialog --backtitle "Choose an editor" \
-	   --menu "Options:" 0 0 0 \
-	   1 "nano" \
-	   2 "vim" \
-	   3 "neovim" \
+    dialog --backtitle "${df}Choose an editor${df}" \
+	   --menu "${df}Options:${df}" 0 0 0 \
+	   1 "${df}nano${df}" \
+	   2 "${df}vim${df}" \
+	   3 "${df}neovim${df}" \
 	   3>&1 1>&2 2>&3
 }
 
 dpkgs() {
-    dialog --backtitle "Useful Packages" \
-	   --menu "Packages:" 0 0 0 \
-	   1 "python3" \
-	   2 "git" \
-	   3 "github" \
-	   4 "neovim" \
-	   5 "reprepro" \
-	   6 "curl" \
+    dialog --backtitle "${df}Useful Packages${df}" \
+	   --menu "${df}Packages:${df}" 0 0 0 \
+	   1 "${df}python3${df}" \
+	   2 "${df}git${df}" \
+	   3 "${df}github${df}" \
+	   4 "${df}neovim${df}" \
+	   5 "${df}reprepro${df}" \
+	   6 "${df}curl${df}" \
 	   3>&1 1>&2 2>&3
 }
 
 crepo() {
-    dialog --backtitle "Create repository (public)" --inputbox "Enter repository name:" 0 0 3>&1 1>&2 2>&3
+    dialog --backtitle "${df}Create repository (public)${df}" --inputbox "${df}Enter repository name:${df}" 0 0 3>&1 1>&2 2>&3
 }
 
 auth() {
@@ -43,26 +55,39 @@ cont() {
     read -p "Press enter to continue..."
 }
 
-sudo mkdir -p /usr/share/gde-cr
+
+
 
 if [ ! -f "$CRED_SAVE_PATH" ]; then
-    dialog --msgbox "No password configured!" 0 0
+    dialog --msgbox "${df}No password configured!${df}" 0 0
 fi
 
 while true; do
-    mainmenu=$(dialog --backtitle "GDE | Graphical Development Environment" \
-	              --menu "Tools:" 0 0 0 \
-		      1 "Edit script" \
-		      2 "Install packages" \
-		      3 "Upgrade & update" \
-		      4 "Set password" \
-		      5 "Create public github repository" \
-		      6 "Initialise git in this directory" \
-		      7 "Log in to Github" \
-		      8 "Initialise UDR repository" \
-		      9 "Set as startup terminal application" \
-		      10 "Wipe program data (password)" \
-		      11 "About" \
+    if [[ "$#" -gt 0 ]]; then
+        case "$1" in
+            --info|-i)
+	        sudo cat "/usr/share/gde-cr/.info"
+		break
+	        ;;
+            *)
+	        echo "unknown args: $1"
+		break
+	        ;;
+       esac
+    fi 
+    mainmenu=$(dialog --backtitle "${df}GDE | Graphical Development Environment${df}" \
+	              --menu "${df}Tools:${df}" 0 0 0 \
+		      1 "${df}Edit script${df}" \
+		      2 "${df}Install packages${df}" \
+		      3 "${df}Upgrade & update${df}" \
+		      4 "${df}Set password${df}" \
+		      5 "${df}Create public github repository${df}" \
+		      6 "${df}Initialise git in this directory${df}" \
+		      7 "${df}Log in to Github${df}" \
+		      8 "${df}Initialise UDR repository${df}" \
+		      9 "${df}Set as startup terminal application${df}" \
+		      10 "${df}Wipe program data (password)${df}" \
+		      11 "${df}About${df}" \
 		      3>&1 1>&2 2>&3)
     status=$?
 
@@ -87,7 +112,7 @@ while true; do
 			;;
 		    3)
 			fil=$(filech)
-			neovim "$fil"
+			nvim "$fil"
 			clear
 			;;
 		    *)
@@ -195,7 +220,7 @@ while true; do
             
 	    echo "deb [signed-by=/etc/apt/keyrings/udr-archive-keyring.asc] https://mcmdev4.github.io/udr/ stable main"             | sudo tee /etc/apt/sources.list.d/udr.list
 
-	    chmod 755 /etc/apt/sources.list.d/udr.list
+	    sudo chmod 644 /etc/apt/sources.list.d/udr.list
 	    ;;
 	9)
 	    auth
@@ -217,7 +242,7 @@ EOF
 	    auth
 	    usimp=$(pswdbox)
 	    if [ "$usimp" = "$PASSWORD" ]; then
-	        dialog --backtitle "Wipe program data" --yesno "Are you sure you want to continue?" 0 0
+	        dialog --backtitle "${df}Wipe program data${df}" --yesno "${df}Are you sure you want to continue?${df}" 0 0
 	        result=$?
 	        if [ "$result" -eq 0 ]; then
 		    clear
@@ -232,13 +257,19 @@ EOF
 	    fi
 	    ;;
 	11)
-	    info="Version: 1.3 Budapest
+	    info="Version: 1.4 Moscow
 	          Codename theme: Capitals
+		  UI Engine: dialog
+		  UI Style: BIUI
 		  ------- SYSTEM --------
 		  Hostname: $(hostname)
 		  User: $USER
-		  Distro: $(. /etc/os-release && echo ""$PRETTY_NAME"")"
-	    dialog --backtitle "About (system and app)" --msgbox "$info" 0 0
+		  Distro: $(. /etc/os-release && echo ""$PRETTY_NAME"")
+		  ------- CUSTOM --------
+		  ${INFO}"
+	    path="/usr/share/gde-cr/.info"
+	    echo "$info" | sudo tee "$path" > /dev/null
+	    dialog --backtitle "About (system and app)" --msgbox "${df}$(cat "$path")${df}" 0 0
 	    ;;
 	*)
 	    echo "exited w/ code: $status"
@@ -247,4 +278,5 @@ EOF
 
     esac
 done
-	    
+
+
